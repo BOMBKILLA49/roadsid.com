@@ -170,6 +170,13 @@ app.post('/api/create-payment-intent', async (req, res) => {
     }),                                                     
   }).catch(err => console.error('Email error:', err.message));
 
+    res.json({ clientSecret: paymentIntent.client_secret });
+  } catch (err) {
+    console.error('Stripe error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── Serve index.html for all other routes ──────────────────
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
