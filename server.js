@@ -168,7 +168,7 @@ app.post('/api/create-payment-intent', async (req, res) => {
       destLat, destLng, destination,                                                                                        
       miles, priceBreakdown,                                                                                                
     }),                                                     
-  }).catch(err => console.error('Email error:', err.message));
+  }).catch(err => console.error('Email error:', err.message, err.response?.body));
 
     res.json({ clientSecret: paymentIntent.client_secret });
   } catch (err) {
