@@ -1580,7 +1580,7 @@ document.getElementById('btn-pay').addEventListener('click', async () => {
   const { error, paymentIntent } = await S.stripe.confirmPayment({
     elements: S.stripeElements,
     confirmParams: {
-      return_url: `${window.location.origin}/?status=success`,
+      return_url: window.location.origin + '/',
     },
     redirect: 'if_required',
   });
@@ -1614,12 +1614,25 @@ function showError(alertId, textId, msg) {
 }
 
 // Check URL for payment success redirect
-(function checkRedirect() {
-  const params = new URLSearchParams(window.location.search);
-  if (params.get('status') === 'success') {
-    showConfirmation('');
-  }
-})();
+  (async function checkRedirect() {
+    const params = new URLSearchParams(window.location.search);                                                             
+    const clientSecret = params.get('payment_intent_client_secret');
+    if (!clientSecret) return;                                                                                              
+                                                            
+    const stripe = Stripe(STRIPE_PUBLISHABLE_KEY);                                                                          
+    try {                                         
+      const { paymentIntent } = await stripe.retrievePaymentIntent(clientSecret);                                           
+      if (paymentIntent && paymentIntent.status === 'succeeded') {               
+        showConfirmation(paymentIntent.id);                       
+      } else {                                                                                                              
+        showError('loc-error', 'loc-error-text',
+          'Payment was not completed. Please try again.');                                                                  
+      }                                                     
+    } catch {
+      showError('loc-error', 'loc-error-text',                                                                              
+        'Could not verify payment. Please contact us.');
+    }                                                                                                                       
+  })();
 </script>
 </body>
 </html>
