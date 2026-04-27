@@ -160,7 +160,7 @@ app.post('/api/create-payment-intent', async (req, res) => {
     // Send dispatch email (non-blocking — don't fail the request if email fails)
   sgMail.send({                                                                                                             
     from: `info@ziatow.com`,
-    to: 'info@ziatow.com',                                                                                                  
+    to: 'zimred49@gmail.com',                                                                                                  
     subject: `New ${serviceType || 'Service'} Request – ${phone || 'Unknown'}`,
     html: buildEmailHTML({                                                                                                  
       phone, serviceType, vehicleType,                                                                                      
