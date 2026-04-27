@@ -1,7 +1,8 @@
 require('dotenv').config();
 const express    = require('express');
 const stripe     = require('stripe')(process.env.STRIPE_SECRET_KEY);
-const nodemailer = require('nodemailer');
+  const sgMail = require('@sendgrid/mail');                 
+  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 const path       = require('path');
 
 console.log('STRIPE_SECRET_KEY set:', !!process.env.STRIPE_SECRET_KEY);
@@ -16,15 +17,6 @@ app.get('/api/health', (req, res) => {
 });
 
 // ── Email transporter ───────────────────────────────────────
-const transporter = nodemailer.createTransport({
-  host:   process.env.SMTP_HOST,
-  port:   parseInt(process.env.SMTP_PORT || '587'),
-  secure: process.env.SMTP_SECURE === 'true',
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-});
 
 function buildEmailHTML(d) {
   const mapsLink = `https://maps.google.com/?q=${d.customerLat},${d.customerLng}`;
@@ -166,24 +158,17 @@ app.post('/api/create-payment-intent', async (req, res) => {
     });
 
     // Send dispatch email (non-blocking — don't fail the request if email fails)
-    transporter.sendMail({
-      from:    `"Zia Tow Dispatch" <${process.env.SMTP_USER}>`,
-      to:      'info@ziatow.com',
-      subject: `🚛 New ${serviceType || 'Service'} Request – ${phone || 'Unknown'}`,
-      html:    buildEmailHTML({
-        phone, serviceType, vehicleType,
-        customerLat, customerLng, customerAddress,
-        destLat, destLng, destination,
-        miles, priceBreakdown,
-      }),
-    }).catch(err => console.error('Email error:', err.message));
-
-    res.json({ clientSecret: paymentIntent.client_secret });
-  } catch (err) {
-    console.error('Stripe error:', err.message);
-    res.status(500).json({ error: err.message });
-  }
-});
+  sgMail.send({                                                                                                             
+    from: `info@ziatow.com`,
+    to: 'info@ziatow.com',                                                                                                  
+    subject: `New ${serviceType || 'Service'} Request – ${phone || 'Unknown'}`,
+    html: buildEmailHTML({                                                                                                  
+      phone, serviceType, vehicleType,                                                                                      
+      customerLat, customerLng, customerAddress,                                                                            
+      destLat, destLng, destination,                                                                                        
+      miles, priceBreakdown,                                                                                                
+    }),                                                     
+  }).catch(err => console.error('Email error:', err.message));
 
 // ── Serve index.html for all other routes ──────────────────
 app.get('*', (req, res) => {
