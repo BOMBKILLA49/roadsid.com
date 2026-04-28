@@ -178,6 +178,25 @@ app.post('/api/create-payment-intent', async (req, res) => {
 });
 
 // ── Serve index.html for all other routes ──────────────────
+  const https = require('https');                                                                                           
+                                                                                                                            
+  app.get('/api/places/autocomplete', async (req, res) => {
+    const q = req.query.q;                                                                                                  
+    const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(q)}&types=address&c
+  omponents=country:us&key=${process.env.GOOGLE_API_KEY}`;                                                                  
+    const r = await fetch(url);
+    const data = await r.json();                                                                                            
+    res.json(data.predictions || []);                       
+  });                                                                                                                       
+                                                            
+  app.get('/api/places/details', async (req, res) => {                                                                      
+    const placeId = req.query.place_id;
+    const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=geometry&key=${process.e
+  nv.GOOGLE_API_KEY}`;                                                                                                      
+    const r = await fetch(url);
+    const data = await r.json();                                                                                            
+    res.json(data.result || {});                            
+  });
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
