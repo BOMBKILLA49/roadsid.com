@@ -1319,20 +1319,6 @@ document.getElementById('dest-input').addEventListener('blur', () => {
     }
   }
 
-  And replace the mousedown handler inside renderAC with:
-
-  div.addEventListener('mousedown', async () => {
-    document.getElementById('dest-input').value = item.display_name;
-    S.destAddress = item.display_name;
-    closeAC();
-    const r = await fetch(`/api/places/details?place_id=${item.place_id}`);
-    const data = await r.json();
-    if (data.geometry) {
-      S.destLat = data.geometry.location.lat;
-      S.destLng = data.geometry.location.lng;
-    }
-  });
-
 function renderAC(results) {
   const list = document.getElementById('dest-ac');
   list.innerHTML = '';
@@ -1345,12 +1331,16 @@ function renderAC(results) {
       <div class="ac-main">${parts[0]}</div>
       <div class="ac-sub">${parts.slice(1,3).join(',').trim()}</div>
     `;
-    div.addEventListener('mousedown', () => {
-      S.destAddress = item.display_name;
-      S.destLat = parseFloat(item.lat);
-      S.destLng = parseFloat(item.lon);
+    div.addEventListener('mousedown', async () => {
       document.getElementById('dest-input').value = item.display_name;
+      S.destAddress = item.display_name;
       closeAC();
+      const r = await fetch(`/api/places/details?place_id=${item.place_id}`);
+      const data = await r.json();
+      if (data.geometry) {
+        S.destLat = data.geometry.location.lat;
+        S.destLng = data.geometry.location.lng;
+      }
     });
     list.appendChild(div);
   });
