@@ -1304,20 +1304,26 @@ document.getElementById('dest-input').addEventListener('blur', () => {
   setTimeout(closeAC, 200);
 });
 
-async function fetchSuggestions(q) {
-  try {
-    const r = await fetch(
-      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5&addressdetails=1`,
-      { headers: { 'Accept-Language': 'en' } }
-    );
-    const results = await r.json();
-    renderAC(results);
-  } catch {
-    closeAC();
-  } finally {
-    document.getElementById('dest-spinner').classList.remove('spinning');
+  async function fetchSuggestions(q) {
+    try {
+      const r = await fetch(
+        `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(q)}&types=address&component
+  s=country:us&key=AIzaSyAom_MtGjJeEFJIh6kVmnClkiyP1eNEC0c`                                                                                     
+      );
+      const data = await r.json();                                                                                          
+      const results = data.predictions || [];               
+      renderAC(results.map(p => ({
+        display_name: p.description,                                                                                        
+        lat: null,
+        lon: null,                                                                                                          
+        place_id: p.place_id,                                                                                               
+      })));
+    } catch {                                                                                                               
+      closeAC();                                            
+    } finally {
+      document.getElementById('dest-spinner').classList.remove('spinning');
+    }                                                                                                                       
   }
-}
 
 function renderAC(results) {
   const list = document.getElementById('dest-ac');
