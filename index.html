@@ -1306,24 +1306,32 @@ document.getElementById('dest-input').addEventListener('blur', () => {
 
   async function fetchSuggestions(q) {
     try {
-      const r = await fetch(
-        `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(q)}&types=address&component
-  s=country:us&key=AIzaSyAom_MtGjJeEFJIh6kVmnClkiyP1eNEC0c`                                                                                     
-      );
-      const data = await r.json();                                                                                          
-      const results = data.predictions || [];               
+      const r = await fetch(`/api/places/autocomplete?q=${encodeURIComponent(q)}`);
+      const results = await r.json();
       renderAC(results.map(p => ({
-        display_name: p.description,                                                                                        
-        lat: null,
-        lon: null,                                                                                                          
-        place_id: p.place_id,                                                                                               
+        display_name: p.description,
+        place_id: p.place_id,
       })));
-    } catch {                                                                                                               
-      closeAC();                                            
+    } catch {
+      closeAC();
     } finally {
       document.getElementById('dest-spinner').classList.remove('spinning');
-    }                                                                                                                       
+    }
   }
+
+  And replace the mousedown handler inside renderAC with:
+
+  div.addEventListener('mousedown', async () => {
+    document.getElementById('dest-input').value = item.display_name;
+    S.destAddress = item.display_name;
+    closeAC();
+    const r = await fetch(`/api/places/details?place_id=${item.place_id}`);
+    const data = await r.json();
+    if (data.geometry) {
+      S.destLat = data.geometry.location.lat;
+      S.destLng = data.geometry.location.lng;
+    }
+  });
 
 function renderAC(results) {
   const list = document.getElementById('dest-ac');
