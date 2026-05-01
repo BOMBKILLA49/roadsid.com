@@ -1396,7 +1396,7 @@ document.getElementById('btn-get-quote').addEventListener('click', async () => {
 });
 
 // ─────────────────────────────────────────────────────────────
-//  ROUTING (OSRM free API)
+//  ROUTING
 // ─────────────────────────────────────────────────────────────
 function haversine(lat1, lng1, lat2, lng2) {
   const R = 3958.8;
@@ -1406,7 +1406,29 @@ function haversine(lat1, lng1, lat2, lng2) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
 
+function decodePolyline(encoded) {
+  const coords = [];
+  let index = 0, lat = 0, lng = 0;
+  while (index < encoded.length) {
+    let b, shift = 0, result = 0;
+    do { b = encoded.charCodeAt(index++) - 63; result |= (b & 0x1f) << shift; shift += 5; } while (b >= 0x20);
+    lat += (result & 1) ? ~(result >> 1) : result >> 1;
+    shift = 0; result = 0;
+    do { b = encoded.charCodeAt(index++) - 63; result |= (b & 0x1f) << shift; shift += 5; } while (b >= 0x20);
+    lng += (result & 1) ? ~(result >> 1) : result >> 1;
+    coords.push([lat / 1e5, lng / 1e5]);
+  }
+  return coords;
+}
+
 async function getRoute(lat1, lng1, lat2, lng2) {
+  try {
+    const r = await fetch(`/api/route?olat=${lat1}&olng=${lng1}&dlat=${lat2}&dlng=${lng2}`);
+    if (r.ok) {
+      const d = await r.json();
+      if (d.miles) return { miles: d.miles, durationMin: d.durationMin, coords: decodePolyline(d.polyline) };
+    }
+  } catch {}
   try {
     const ctrl = new AbortController();
     setTimeout(() => ctrl.abort(), 8000);
@@ -1415,11 +1437,7 @@ async function getRoute(lat1, lng1, lat2, lng2) {
     const d = await r.json();
     if (d.routes && d.routes.length) {
       const route = d.routes[0];
-      return {
-        miles: route.distance / 1609.344,
-        durationMin: route.duration / 60,
-        coords: route.geometry.coordinates.map(([lng, lat]) => [lat, lng]),
-      };
+      return { miles: route.distance / 1609.344, durationMin: route.duration / 60, coords: route.geometry.coordinates.map(([lng, lat]) => [lat, lng]) };
     }
   } catch {}
   const miles = haversine(lat1, lng1, lat2, lng2) * 1.3;

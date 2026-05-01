@@ -172,6 +172,23 @@ app.get('/api/places/details', async (req, res) => {
   res.json(data.result || {});
 });
 
+app.get('/api/route', async (req, res) => {
+  const { olat, olng, dlat, dlng } = req.query;
+  const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${olat},${olng}&destination=${dlat},${dlng}&mode=driving&key=${process.env.GOOGLE_API_KEY}`;
+  const r = await fetch(url);
+  const data = await r.json();
+  if (data.routes && data.routes.length) {
+    const leg = data.routes[0].legs[0];
+    res.json({
+      miles: leg.distance.value / 1609.344,
+      durationMin: leg.duration.value / 60,
+      polyline: data.routes[0].overview_polyline.points,
+    });
+  } else {
+    res.status(400).json({ error: 'No route found' });
+  }
+});
+
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
