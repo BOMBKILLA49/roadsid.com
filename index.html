@@ -1133,7 +1133,8 @@ const PRICING = {
 function calcPrice(serviceKey, vehicleKey, miles) {
   const svc = PRICING.services[serviceKey];
   const veh = PRICING.vehicles[vehicleKey];
-  const base    = svc.base * veh.mult;
+  const waiveHookup = serviceKey === 'towing' && miles > 350;
+  const base    = waiveHookup ? 0 : svc.base * veh.mult;
   const mileage = svc.perMile * miles * veh.mult;
   const total   = base + mileage;
   return { base, mileage, miles, total };
