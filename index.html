@@ -778,7 +778,7 @@
 
   <!-- HEADER -->
   <header class="app-header">
-    <div class="logo" onclick="goToStep(1)" style="cursor:pointer;">
+    <div class="logo" onclick="resetToHome()" style="cursor:pointer;">
       <div class="logo-icon"><i class="fa-solid fa-truck-pickup"></i></div>
       <div class="logo-text">Road<span>Sid</span></div>
     </div>
@@ -1155,6 +1155,18 @@ function goToStep(n) {
   S.step = n;
   updateProgressBar(n);
   window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function resetToHome() {
+  S.userLat = null; S.userLng = null; S.userAddress = '';
+  const btn = document.getElementById('btn-get-location');
+  btn.disabled = false;
+  btn.style.background = '';
+  btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> Detect My Location';
+  document.getElementById('loc-status').textContent = 'Tap the button below to detect your location';
+  document.getElementById('loc-address').style.display = 'none';
+  document.getElementById('loc-error').classList.add('hidden');
+  goToStep(1);
 }
 
 function updateProgressBar(active) {
