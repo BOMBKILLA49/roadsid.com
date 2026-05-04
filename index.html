@@ -881,45 +881,32 @@
       </div>
     </div>
 
-    <!-- Service Type -->
+    <!-- Vehicle Make -->
     <div class="form-group">
-      <label class="form-label">Service Needed</label>
-      <div class="card-grid col-2" id="service-grid">
-        <div class="card-option" data-value="towing">
-          <span class="c-icon"><i class="fa-solid fa-truck-ramp-box"></i></span>
-          <div class="c-label">Towing</div>
-          <div class="c-note">$110 + $6.50/mi</div>
-        </div>
-        <div class="card-option" data-value="jumpstart">
-          <span class="c-icon"><i class="fa-solid fa-car-battery"></i></span>
-          <div class="c-label">Jump Start</div>
-          <div class="c-note">Flat $89</div>
-        </div>
-        <div class="card-option" data-value="flattire">
-          <span class="c-icon"><i class="fa-solid fa-circle-dot"></i></span>
-          <div class="c-label">Flat Tire</div>
-          <div class="c-note">Flat $80</div>
-        </div>
-        <div class="card-option" data-value="lockout">
-          <span class="c-icon"><i class="fa-solid fa-key"></i></span>
-          <div class="c-label">Lockout</div>
-          <div class="c-note">Flat $80</div>
-        </div>
-        <div class="card-option" data-value="fuel">
-          <span class="c-icon"><i class="fa-solid fa-gas-pump"></i></span>
-          <div class="c-label">Fuel Delivery</div>
-          <div class="c-note">Flat $85</div>
-        </div>
-        <div class="card-option" data-value="winch">
-          <span class="c-icon"><i class="fa-solid fa-anchor"></i></span>
-          <div class="c-label">Winch / Recovery</div>
-          <div class="c-note">$145 + $5/mi</div>
-        </div>
+      <label class="form-label">Vehicle Make</label>
+      <div class="address-wrap">
+        <input type="text" class="address-input" id="vehicle-make" placeholder="e.g. Ford, Toyota, Chevrolet…" autocomplete="off" />
       </div>
     </div>
 
-    <!-- Destination (only shown for towing/winch) -->
-    <div class="form-group" id="dest-section" style="display:none;">
+    <!-- Vehicle Model -->
+    <div class="form-group">
+      <label class="form-label">Vehicle Model</label>
+      <div class="address-wrap">
+        <input type="text" class="address-input" id="vehicle-model" placeholder="e.g. F-150, Camry, Silverado…" autocomplete="off" />
+      </div>
+    </div>
+
+    <!-- Vehicle Color -->
+    <div class="form-group">
+      <label class="form-label">Vehicle Color</label>
+      <div class="address-wrap">
+        <input type="text" class="address-input" id="vehicle-color" placeholder="e.g. White, Black, Red…" autocomplete="off" />
+      </div>
+    </div>
+
+    <!-- Destination -->
+    <div class="form-group" id="dest-section">
       <label class="form-label">Tow Destination</label>
       <div class="address-wrap">
         <input
@@ -1113,12 +1100,7 @@ const STRIPE_PUBLISHABLE_KEY = 'pk_live_51SD3q8QulRZUGxUn3bkZSGSccPqc4m2S26Ti2vR
 // ─────────────────────────────────────────────────────────────
 const PRICING = {
   services: {
-    towing:    { name: 'Towing',          base: 110, perMile: 6.50, needsDest: true  },
-    jumpstart: { name: 'Jump Start',      base: 89,  perMile: 0,    needsDest: false },
-    flattire:  { name: 'Flat Tire',       base: 80,  perMile: 0,    needsDest: false },
-    lockout:   { name: 'Lockout',         base: 80,  perMile: 0,    needsDest: false },
-    fuel:      { name: 'Fuel Delivery',   base: 85,  perMile: 0,    needsDest: false },
-    winch:     { name: 'Winch Recovery',  base: 145, perMile: 5.00, needsDest: true  },
+    towing: { name: 'Towing', base: 110, perMile: 6.50 },
   },
   vehicles: {
     motorcycle: { name: 'Motorcycle',       mult: 0.90 },
@@ -1148,7 +1130,8 @@ const S = {
   userLat: null, userLng: null, userAddress: '',
   destLat: null, destLng: null, destAddress: '',
   vehicleType: null,
-  serviceType: null,
+  vehicleMake: '', vehicleModel: '', vehicleColor: '',
+  serviceType: 'towing',
   phone: '',
   miles: 0,
   durationMin: 0,
@@ -1262,17 +1245,6 @@ async function reverseGeocode(lat, lng) {
 //  STEP 2 – VEHICLE & SERVICE SELECTION
 // ─────────────────────────────────────────────────────────────
 setupCardGrid('vehicle-grid', (val) => { S.vehicleType = val; });
-setupCardGrid('service-grid', (val) => {
-  S.serviceType = val;
-  const needsDest = PRICING.services[val].needsDest;
-  document.getElementById('dest-section').style.display = needsDest ? 'block' : 'none';
-  if (!needsDest) {
-    S.destAddress = '';
-    S.destLat = null;
-    S.destLng = null;
-    document.getElementById('dest-input').value = '';
-  }
-});
 
 function setupCardGrid(gridId, onChange) {
   const grid = document.getElementById(gridId);
@@ -1357,10 +1329,15 @@ function closeAC() {
 // ─────────────────────────────────────────────────────────────
 document.getElementById('btn-get-quote').addEventListener('click', async () => {
   if (!S.vehicleType) return showError('form-error', 'form-error-text', 'Please select your vehicle type.');
-  if (!S.serviceType) return showError('form-error', 'form-error-text', 'Please select the service you need.');
 
-  const needsDest = PRICING.services[S.serviceType].needsDest;
-  if (needsDest && (!S.destLat || !S.destLng)) {
+  S.vehicleMake  = document.getElementById('vehicle-make').value.trim();
+  S.vehicleModel = document.getElementById('vehicle-model').value.trim();
+  S.vehicleColor = document.getElementById('vehicle-color').value.trim();
+  if (!S.vehicleMake)  return showError('form-error', 'form-error-text', 'Please enter the vehicle make.');
+  if (!S.vehicleModel) return showError('form-error', 'form-error-text', 'Please enter the vehicle model.');
+  if (!S.vehicleColor) return showError('form-error', 'form-error-text', 'Please enter the vehicle color.');
+
+  if (!S.destLat || !S.destLng) {
     return showError('form-error', 'form-error-text', 'Please select a tow destination from the suggestions.');
   }
 
@@ -1371,24 +1348,16 @@ document.getElementById('btn-get-quote').addEventListener('click', async () => {
   showLoading('Calculating your route…');
 
   try {
-    if (needsDest) {
-      const route = await getRoute(S.userLat, S.userLng, S.destLat, S.destLng);
-      S.miles = route.miles;
-      S.durationMin = route.durationMin;
-      S.routeCoords = route.coords;
-    } else {
-      S.miles = 0;
-      S.durationMin = 0;
-    }
+    const route = await getRoute(S.userLat, S.userLng, S.destLat, S.destLng);
+    S.miles = route.miles;
+    S.durationMin = route.durationMin;
+    S.routeCoords = route.coords;
 
     S.price = calcPrice(S.serviceType, S.vehicleType, S.miles);
-    renderQuote(needsDest);
+    renderQuote();
     hideLoading();
     goToStep(3);
-
-    if (needsDest) {
-      setTimeout(() => renderMap(), 100);
-    }
+    setTimeout(() => renderMap(), 100);
   } catch (err) {
     hideLoading();
     showError('form-error', 'form-error-text', 'Could not calculate route. Please check the destination and try again.');
@@ -1447,34 +1416,25 @@ async function getRoute(lat1, lng1, lat2, lng2) {
 // ─────────────────────────────────────────────────────────────
 //  RENDER QUOTE
 // ─────────────────────────────────────────────────────────────
-function renderQuote(needsDest) {
+function renderQuote() {
   const svc = PRICING.services[S.serviceType];
   const veh = PRICING.vehicles[S.vehicleType];
   const p   = S.price;
 
   document.getElementById('q-service-name').textContent = svc.name;
-  document.getElementById('q-vehicle-name').textContent = veh.name;
+  document.getElementById('q-vehicle-name').textContent = `${S.vehicleColor} ${S.vehicleMake} ${S.vehicleModel} (${veh.name})`;
   document.getElementById('q-total').textContent = fmt(p.total);
-
-  if (needsDest) {
-    document.getElementById('q-miles').textContent = p.miles.toFixed(1);
-    document.getElementById('q-eta').textContent = `${Math.round(S.durationMin)} min`;
-    document.getElementById('map-wrap').style.display = 'block';
-    document.getElementById('q-base-label').textContent = 'Hook-up Fee';
-    document.getElementById('q-base-val').textContent = fmt(p.base);
-    document.getElementById('q-mileage-label').textContent =
-      `${p.miles.toFixed(1)} mi × $${svc.perMile.toFixed(2)} × ${veh.mult}x`;
-    document.getElementById('q-mileage-val').textContent = fmt(p.mileage);
-    document.getElementById('q-mileage-row').style.display = 'flex';
-    document.getElementById('quote-subtitle').textContent =
-      `${p.miles.toFixed(1)}-mile tow · ${Math.round(S.durationMin)} min drive`;
-  } else {
-    document.getElementById('map-wrap').style.display = 'none';
-    document.getElementById('q-base-label').textContent = 'Service Fee';
-    document.getElementById('q-base-val').textContent = fmt(p.base);
-    document.getElementById('q-mileage-row').style.display = 'none';
-    document.getElementById('quote-subtitle').textContent = 'On-site service — no towing destination required.';
-  }
+  document.getElementById('q-miles').textContent = p.miles.toFixed(1);
+  document.getElementById('q-eta').textContent = `${Math.round(S.durationMin)} min`;
+  document.getElementById('map-wrap').style.display = 'block';
+  document.getElementById('q-base-label').textContent = 'Hook-up Fee';
+  document.getElementById('q-base-val').textContent = fmt(p.base);
+  document.getElementById('q-mileage-label').textContent =
+    `${p.miles.toFixed(1)} mi × $${svc.perMile.toFixed(2)} × ${veh.mult}x`;
+  document.getElementById('q-mileage-val').textContent = fmt(p.mileage);
+  document.getElementById('q-mileage-row').style.display = 'flex';
+  document.getElementById('quote-subtitle').textContent =
+    `${p.miles.toFixed(1)}-mile tow · ${Math.round(S.durationMin)} min drive`;
 }
 
 function fmt(n) {
@@ -1555,6 +1515,9 @@ async function initStripe() {
         amount: S.price.total,
         serviceType: S.serviceType,
         vehicleType: S.vehicleType,
+        vehicleMake: S.vehicleMake,
+        vehicleModel: S.vehicleModel,
+        vehicleColor: S.vehicleColor,
         phone: S.phone,
         customerLat: S.userLat,
         customerLng: S.userLng,

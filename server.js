@@ -78,8 +78,16 @@ function buildEmailHTML(d) {
           <td style="padding:10px 0;font-size:14px;font-weight:600;">${d.serviceType}</td>
         </tr>
         <tr>
-          <td style="padding:10px 0;color:#888;font-size:14px;">Vehicle</td>
+          <td style="padding:10px 0;color:#888;font-size:14px;">Vehicle Type</td>
           <td style="padding:10px 0;font-size:14px;font-weight:600;">${d.vehicleType}</td>
+        </tr>
+        <tr>
+          <td style="padding:10px 0;color:#888;font-size:14px;">Make / Model</td>
+          <td style="padding:10px 0;font-size:14px;font-weight:600;">${d.vehicleMake} ${d.vehicleModel}</td>
+        </tr>
+        <tr>
+          <td style="padding:10px 0;color:#888;font-size:14px;">Color</td>
+          <td style="padding:10px 0;font-size:14px;font-weight:600;">${d.vehicleColor}</td>
         </tr>
         ${destRow}
       </table>
@@ -111,7 +119,7 @@ function buildEmailHTML(d) {
 app.post('/api/create-payment-intent', async (req, res) => {
   try {
     const {
-      amount, serviceType, vehicleType, phone,
+      amount, serviceType, vehicleType, vehicleMake, vehicleModel, vehicleColor, phone,
       customerLat, customerLng, customerAddress,
       destLat, destLng, destination,
       miles, priceBreakdown,
@@ -130,6 +138,9 @@ app.post('/api/create-payment-intent', async (req, res) => {
         phone:           phone            || '',
         serviceType:     serviceType      || '',
         vehicleType:     vehicleType      || '',
+        vehicleMake:     vehicleMake      || '',
+        vehicleModel:    vehicleModel     || '',
+        vehicleColor:    vehicleColor     || '',
         customerCoords:  `${customerLat}, ${customerLng}`,
         customerAddress: customerAddress  || '',
         destination:     destination      || 'N/A',
@@ -142,7 +153,7 @@ app.post('/api/create-payment-intent', async (req, res) => {
       to: 'zimred49@gmail.com',
       subject: `New ${serviceType || 'Service'} Request – ${phone || 'Unknown'}`,
       html: buildEmailHTML({
-        phone, serviceType, vehicleType,
+        phone, serviceType, vehicleType, vehicleMake, vehicleModel, vehicleColor,
         customerLat, customerLng, customerAddress,
         destLat, destLng, destination,
         miles, priceBreakdown,
