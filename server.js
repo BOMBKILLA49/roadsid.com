@@ -78,6 +78,12 @@ function buildEmailHTML(d) {
           <td style="padding:10px 0;font-size:14px;font-weight:600;">${d.serviceType}</td>
         </tr>
         <tr>
+          <td style="padding:10px 0;color:#888;font-size:14px;">Schedule</td>
+          <td style="padding:10px 0;font-size:14px;font-weight:600;${d.scheduleType === 'asap' ? 'color:#FF6B1A;' : ''}">
+            ${d.scheduleType === 'asap' ? '⚡ ASAP' : `📅 ${new Date(d.scheduleTime).toLocaleString('en-US', { timeZone: 'America/Denver', dateStyle: 'full', timeStyle: 'short' })}`}
+          </td>
+        </tr>
+        <tr>
           <td style="padding:10px 0;color:#888;font-size:14px;">Vehicle Type</td>
           <td style="padding:10px 0;font-size:14px;font-weight:600;">${d.vehicleType}</td>
         </tr>
@@ -119,7 +125,7 @@ function buildEmailHTML(d) {
 app.post('/api/create-payment-intent', async (req, res) => {
   try {
     const {
-      amount, serviceType, vehicleType, vehicleMake, vehicleModel, vehicleColor, phone,
+      amount, serviceType, vehicleType, vehicleMake, vehicleModel, vehicleColor, scheduleType, scheduleTime, phone,
       customerLat, customerLng, customerAddress,
       destLat, destLng, destination,
       miles, priceBreakdown,
@@ -141,6 +147,8 @@ app.post('/api/create-payment-intent', async (req, res) => {
         vehicleMake:     vehicleMake      || '',
         vehicleModel:    vehicleModel     || '',
         vehicleColor:    vehicleColor     || '',
+        scheduleType:    scheduleType     || 'asap',
+        scheduleTime:    scheduleTime     || '',
         customerCoords:  `${customerLat}, ${customerLng}`,
         customerAddress: customerAddress  || '',
         destination:     destination      || 'N/A',
@@ -153,7 +161,7 @@ app.post('/api/create-payment-intent', async (req, res) => {
       to: 'zimred49@gmail.com',
       subject: `New ${serviceType || 'Service'} Request – ${phone || 'Unknown'}`,
       html: buildEmailHTML({
-        phone, serviceType, vehicleType, vehicleMake, vehicleModel, vehicleColor,
+        phone, serviceType, vehicleType, vehicleMake, vehicleModel, vehicleColor, scheduleType, scheduleTime,
         customerLat, customerLng, customerAddress,
         destLat, destLng, destination,
         miles, priceBreakdown,

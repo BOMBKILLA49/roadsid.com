@@ -927,6 +927,26 @@
       </div>
     </div>
 
+    <!-- Schedule -->
+    <div class="form-group">
+      <label class="form-label">When do you need service?</label>
+      <div class="card-grid col-2" id="schedule-grid">
+        <div class="card-option" data-value="asap">
+          <span class="c-icon"><i class="fa-solid fa-bolt"></i></span>
+          <div class="c-label">ASAP</div>
+          <div class="c-note">Send driver now</div>
+        </div>
+        <div class="card-option" data-value="scheduled">
+          <span class="c-icon"><i class="fa-solid fa-calendar-days"></i></span>
+          <div class="c-label">Schedule</div>
+          <div class="c-note">Pick date &amp; time</div>
+        </div>
+      </div>
+      <div id="schedule-datetime" style="display:none;margin-top:12px;">
+        <input type="datetime-local" class="address-input" id="schedule-input" />
+      </div>
+    </div>
+
     <!-- Phone Number -->
     <div class="form-group">
       <label class="form-label">Your Phone Number</label>
@@ -1138,6 +1158,7 @@ const S = {
   vehicleType: null,
   vehicleMake: '', vehicleModel: '', vehicleColor: '',
   serviceType: 'towing',
+  scheduleType: null, scheduleTime: '',
   phone: '',
   miles: 0,
   durationMin: 0,
@@ -1263,6 +1284,11 @@ async function reverseGeocode(lat, lng) {
 //  STEP 2 – VEHICLE & SERVICE SELECTION
 // ─────────────────────────────────────────────────────────────
 setupCardGrid('vehicle-grid', (val) => { S.vehicleType = val; });
+setupCardGrid('schedule-grid', (val) => {
+  S.scheduleType = val;
+  document.getElementById('schedule-datetime').style.display = val === 'scheduled' ? 'block' : 'none';
+  if (val === 'asap') S.scheduleTime = '';
+});
 
 function setupCardGrid(gridId, onChange) {
   const grid = document.getElementById(gridId);
@@ -1357,6 +1383,12 @@ document.getElementById('btn-get-quote').addEventListener('click', async () => {
 
   if (!S.destLat || !S.destLng) {
     return showError('form-error', 'form-error-text', 'Please select a tow destination from the suggestions.');
+  }
+
+  if (!S.scheduleType) return showError('form-error', 'form-error-text', 'Please select when you need service.');
+  if (S.scheduleType === 'scheduled') {
+    S.scheduleTime = document.getElementById('schedule-input').value;
+    if (!S.scheduleTime) return showError('form-error', 'form-error-text', 'Please select a date and time for your scheduled tow.');
   }
 
   S.phone = document.getElementById('phone-input').value.trim();
@@ -1536,6 +1568,8 @@ async function initStripe() {
         vehicleMake: S.vehicleMake,
         vehicleModel: S.vehicleModel,
         vehicleColor: S.vehicleColor,
+        scheduleType: S.scheduleType,
+        scheduleTime: S.scheduleTime,
         phone: S.phone,
         customerLat: S.userLat,
         customerLng: S.userLng,
